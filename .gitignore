@@ -1,0 +1,23 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Build outputs
+**/bin/
+**/obj/
+*.dll
+*.pdb
+*.exe
+
+# NuGet
+*.nupkg
+packages/
+
+# Rider or Resharper caches
+.idea/
+*.DotSettings.user
+
+
+**/DataAccessLayer/Migrations/
+appsettings.Development.json
