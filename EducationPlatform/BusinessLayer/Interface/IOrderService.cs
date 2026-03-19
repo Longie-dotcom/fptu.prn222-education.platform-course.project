@@ -14,5 +14,9 @@ namespace BusinessLayer.Interface
 
         Task<OrderDTO> FinishOrder(
             long orderCode);
+
+        Task<IEnumerable<CouponDTO>> GetCoupons(
+            Guid callerId,
+            string callerRole);
     }
 }

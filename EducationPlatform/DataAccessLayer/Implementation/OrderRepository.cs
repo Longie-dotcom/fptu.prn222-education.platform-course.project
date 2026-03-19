@@ -61,13 +61,54 @@ namespace DataAccessLayer.Implementation
             return await context.Orders.FirstOrDefaultAsync(o => o.OrderCode == orderCode);
         }
 
-        public async Task<IEnumerable<Coupon>> GetCouponsByStudentId(Guid studentId)
+        public async Task<IEnumerable<Penalty>> GetPenalties(
+            Guid? teacherId)
         {
-            return await context.Coupons
+            var query = context.Penalties
                 .AsNoTracking()
-                .Where(c => c.StudentID == studentId)
+                .AsQueryable();
+
+            if (teacherId.HasValue)
+            {
+                query = query.Where(p => p.TeacherID == teacherId.Value);
+            }
+
+            return await query
+                .OrderByDescending(p => p.CreatedAt)
+                .ToListAsync();
+        }
+
+        public void CreatePenalty(
+            Penalty penalty)
+        {
+            if (penalty == null)
+                return;
+
+            context.Penalties.Add(penalty);
+        }
+
+        public async Task<IEnumerable<Coupon>> GetCoupons(
+            Guid? studentId)
+        {
+            var query = context.Coupons
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (studentId.HasValue)
+            {
+                query = query.Where(c => c.StudentID == studentId.Value);
+            }
+
+            return await query
                 .OrderByDescending(c => c.CreatedAt)
                 .ToListAsync();
+        }
+
+        public async Task<Coupon?> GetCouponDetailById(
+            Guid couponId)
+        {
+            return await context.Coupons
+                .FirstOrDefaultAsync(c => c.CouponID == couponId);
         }
 
         public void CreateCoupons(IEnumerable<Coupon> coupons)

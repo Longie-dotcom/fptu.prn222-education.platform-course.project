@@ -50,6 +50,7 @@ namespace DataAccessLayer.Persistence
         // ====================
         public DbSet<Coupon> Coupons => Set<Coupon>();
         public DbSet<Order> Orders => Set<Order>();
+        public DbSet<Penalty> Penalties => Set<Penalty>();
 
         // ====================
         // Enrollment Management
@@ -624,6 +625,43 @@ namespace DataAccessLayer.Persistence
                       .IsRequired();
 
                 entity.Property(p => p.PaidAt);
+            });
+
+            // ====================
+            // Penalty (Aggregate Root)
+            // ====================
+            modelBuilder.Entity<Penalty>(entity =>
+            {
+                entity.HasKey(p => p.PenaltyID);
+
+                entity.Property(p => p.PenaltyAmount)
+                      .IsRequired()
+                      .HasPrecision(18, 2);
+
+                entity.Property(p => p.Reason)
+                      .IsRequired()
+                      .HasMaxLength(500);
+
+                entity.Property(p => p.CreatedAt)
+                      .IsRequired();
+
+                entity.Property(p => p.TeacherID)
+                      .IsRequired();
+
+                entity.Property(p => p.CourseID)
+                      .IsRequired();
+
+                // Relationship with Teacher (User)
+                entity.HasOne(p => p.Teacher)
+                      .WithMany()
+                      .HasForeignKey(p => p.TeacherID)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Relationship with Course
+                entity.HasOne(p => p.Course)
+                      .WithMany()
+                      .HasForeignKey(p => p.CourseID)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             // ====================

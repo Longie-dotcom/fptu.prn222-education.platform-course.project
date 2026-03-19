@@ -27,5 +27,17 @@ namespace BusinessLayer.DTO
     {
         public Guid StudentID { get; set; }
         public Guid CourseID { get; set; }
+        public List<Guid>? CouponIds { get; set; } = new List<Guid>();
+    }
+
+    public class CouponDTO
+    {
+        public Guid CouponID { get; set; }
+        public Guid StudentID { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public decimal DiscountAmount { get; set; }
+        public bool IsUsed { get; set; }
+        public string Reason { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using BusinessLayer.DTO;
+using Domain.CourseManagement.Enum;
 
 namespace BusinessLayer.Interface
 {
@@ -33,13 +34,13 @@ namespace BusinessLayer.Interface
             string callerRole);
 
         // Complaint
-        Task<IEnumerable<ComplaintDTO>> GetPendingComplaints();
+        Task<IEnumerable<ComplaintDTO>> GetComplaints(
+            ComplaintStatus? status,
+            Guid callerId,
+            string userRole);
 
         Task<ComplaintDetailDTO> GetComplaintDetail(
             Guid complaintId);
-
-        Task<IEnumerable<ComplaintDTO>> GetApprovedComplaintsForTeacher(
-            Guid teacherId);
 
         Task CreateComplaint(
             CreateComplaintDTO dto,

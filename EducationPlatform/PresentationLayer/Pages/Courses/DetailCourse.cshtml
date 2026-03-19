@@ -9,64 +9,89 @@
 }
 
 <div style="max-width: 1100px; margin: 30px auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1e293b; line-height: 1.6;">
-    <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
+    @* ===== TOP BOX ===== *@
+    <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px 25px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.02);">
 
-        @* Left Side: Information *@
         <div style="flex: 1;">
             @if (userRole == "Admin")
             {
                 <h6 style="margin: 0; color: #1e1b4b; font-size: 1rem; font-weight: 700;">Administrative Review</h6>
-                <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.85rem;">Check course content, videos, and assessments for policy compliance.</p>
+                <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.85rem;">
+                    Check course content, videos, and assessments for policy compliance.
+                </p>
             }
             else if (userRole == "Student")
             {
                 <h6 style="margin: 0; color: #1e1b4b; font-size: 1.1rem; font-weight: 700;">Enroll in this course</h6>
-                <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.85rem;">Get lifetime access to all lessons, materials, and certificates of completion.</p>
+                <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.85rem;">
+                    Get lifetime access to all lessons, materials, and certificates of completion.
+                </p>
             }
             else
             {
                 <h6 style="margin: 0; color: #1e1b4b; font-size: 1rem; font-weight: 700;">Course Preview</h6>
-                <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.85rem;">Please log in to enroll or view restricted curriculum materials.</p>
+                <p style="margin: 4px 0 0 0; color: #64748b; font-size: 0.85rem;">
+                    Please log in to enroll or view restricted curriculum materials.
+                </p>
             }
         </div>
 
-        @* Right Side: Button *@
         <div style="flex: 0 0 auto; margin-left: 20px;">
             @if (userRole == "Admin")
             {
                 <a asp-page="/Courses/ReviewCourse"
-                   asp-route-id="@course.CourseID"
-                   class="btn btn-warning"
-                   style="display: inline-flex; align-items: center; padding: 10px 24px; font-weight: 700; border-radius: 8px; text-decoration: none; color: #854d0e; background-color: #facc15; border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transition: transform 0.2s;">
+                       asp-route-id="@course.CourseID"
+                       class="btn btn-warning"
+                       style="padding: 10px 24px; font-weight: 700; border-radius: 8px;">
                     Review Course
                 </a>
             }
 
             @if (userRole == "Student")
             {
-                <form method="post"
-                      asp-page="/Orders/ListOrder"
-                      asp-page-handler="CreateOrder"
-                      style="margin: 0;">
-                    <input type="hidden" name="courseId" value="@course.CourseID" />
-                    <button type="submit"
-                            class="btn btn-primary"
-                            style="display: inline-flex; align-items: center; padding: 12px 30px; font-weight: 700; border-radius: 8px; border: none; background-color: #4834d4; color: white; cursor: pointer; box-shadow: 0 4px 14px 0 rgba(72, 52, 212, 0.39); transition: all 0.2s;">
-                        Buy Course Now
-                    </button>
-                </form>
+                <a asp-page="/Orders/CreateOrder"
+                       asp-route-id="@course.CourseID"
+                       class="btn btn-warning"
+                       style="padding: 10px 24px; font-weight: 700; border-radius: 8px;">
+                    Enroll Course
+                </a>
             }
 
             @if (!User.Identity.IsAuthenticated)
             {
                 <a asp-page="/Auth/Login"
                        class="btn btn-outline-secondary"
-                       style="display: inline-flex; align-items: center; padding: 10px 24px; font-weight: 700; border-radius: 8px; text-decoration: none; color: #854d0e; background-color: #facc15; border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transition: transform 0.2s;">
+                       style="padding: 10px 24px; font-weight: 700; border-radius: 8px;">
                     Login to Buy
                 </a>
             }
         </div>
     </div>
+
+
+    @* ===== REPORT / COMPLAINT BOX ===== *@
+    @if (userRole == "Student")
+    {
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #fff5f5; border: 1px solid #fecaca; padding: 18px 22px; border-radius: 12px; box-shadow: 0 2px 8px rgba(231, 76, 60, 0.05); margin-bottom: 20px">
+
+            @* Left text *@
+            <div>
+                <h6 style="margin: 0; color: #7f1d1d; font-size: 1rem; font-weight: 700;">
+                    Found an issue?
+                </h6>
+                <p style="margin: 4px 0 0 0; color: #b91c1c; font-size: 0.85rem;">
+                    Report inappropriate content, copyright violations, or course problems.
+                </p>
+            </div>
+
+            @* Right button *@
+            <a asp-page="CreateComplaint"
+                   asp-route-courseId="@Model.Course.CourseID"
+                   style="text-decoration:none; padding:10px 22px; border-radius:8px; font-weight:600; background:#ef4444; color:white;">
+                Report / Complaint
+            </a>
+        </div>
+    }
 
     @* --- TOP ALERTS (Violated Policies) --- *@
     @if (course.ViolatedPolicies != null && course.ViolatedPolicies.Any())

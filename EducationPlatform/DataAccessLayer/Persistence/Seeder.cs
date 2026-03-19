@@ -324,6 +324,90 @@ namespace DataAccessLayer.Persistence
             }
 
             // ====================
+            // Seed Teachers
+            // ====================
+            if (!await context.Users.AnyAsync(u => u.Role == Role.Teacher))
+            {
+                var teachers = new List<User>
+                {
+                    new User(
+                        Guid.NewGuid(),
+                        "nnnai3131@gmail.com",
+                        "28012005",
+                        "0000003232",
+                        "Teacher 3232",
+                        "Teacher account",
+                        Role.Teacher,
+                        true
+                    ),
+                    new User(
+                        Guid.NewGuid(),
+                        "nnnai3232@gmail.com",
+                        "28012005",
+                        "0000003333",
+                        "Teacher 3333",
+                        "Teacher account",
+                        Role.Teacher,
+                        true
+                    ),
+                    new User(
+                        Guid.NewGuid(),
+                        "nnnai3333@gmail.com",
+                        "28012005",
+                        "0000003434",
+                        "Teacher 3434",
+                        "Teacher account",
+                        Role.Teacher,
+                        true
+                    )
+                };
+
+                context.Users.AddRange(teachers);
+            }
+
+            // ====================
+            // Seed Students
+            // ====================
+            if (!await context.Users.AnyAsync(u => u.Role == Role.Student))
+            {
+                var students = new List<User>
+                {
+                    new User(
+                        Guid.NewGuid(),
+                        "dongxuanluc2018@gmail.com",
+                        "28012005",
+                        "0000002018",
+                        "Student 2018",
+                        "Student account",
+                        Role.Student,
+                        true
+                    ),
+                    new User(
+                        Guid.NewGuid(),
+                        "dongxuanluc2019@gmail.com",
+                        "28012005",
+                        "0000002019",
+                        "Student 2019",
+                        "Student account",
+                        Role.Student,
+                        true
+                    ),
+                    new User(
+                        Guid.NewGuid(),
+                        "dongxuanluc2020@gmail.com",
+                        "28012005",
+                        "0000002020",
+                        "Student 2020",
+                        "Student account",
+                        Role.Student,
+                        true
+                    )
+                };
+
+                context.Users.AddRange(students);
+            }
+
+            // ====================
             // Seed Teacher Course Review Policies (Admin Enforcement)
             // ====================
             if (!await context.Policies.AnyAsync())

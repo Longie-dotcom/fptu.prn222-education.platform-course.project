@@ -26,6 +26,7 @@ namespace BusinessLayer.Helper
 
             // ----- Order Domain -----
             CreateMap<Order,  OrderDTO>();
+            CreateMap<Coupon, CouponDTO>();
 
             // ----- Course Domain -----
             CreateMap<PolicyRule,PolicyRuleDTO>();

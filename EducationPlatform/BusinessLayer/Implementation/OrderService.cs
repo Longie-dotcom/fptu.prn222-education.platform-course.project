@@ -77,10 +77,37 @@ namespace BusinessLayer.Implementation
                 throw new NotFound(
                     $"Student with ID: {dto.StudentID} not found.");
 
-            // Create commission from course price
+            // Caculate discount from coupons
+            decimal totalDiscount = 0;
+            List<Coupon> validCoupons = new();
+
+            if (dto.CouponIds != null && dto.CouponIds.Any())
+            {
+                foreach (var couponId in dto.CouponIds)
+                {
+                    var coupon = await unitOfWork
+                        .GetRepository<IOrderRepository>()
+                        .GetCouponDetailById(couponId);
+
+                    if (coupon == null)
+                        continue;
+
+                    // Validate coupon
+                    if (coupon.StudentID != dto.StudentID || coupon.IsUsed)
+                        continue;
+
+                    totalDiscount += coupon.DiscountAmount;
+                    validCoupons.Add(coupon);
+                }
+            }
+
+            // Apply discount
+            decimal finalPrice = Math.Max(0, course.Price.Amount - totalDiscount);
+
+            // Apply domain - create commission from course price
             var commission = Commission.Create(
                 PLATFORM_COMMISSION_RATE,
-                course.Price.Amount);
+                finalPrice);
 
             // Apply domain - create Order
             var order = new Order(
@@ -88,6 +115,12 @@ namespace BusinessLayer.Implementation
                 commission,
                 dto.StudentID,
                 dto.CourseID);
+
+            // Apply domain - Mark coupons as used
+            foreach (var coupon in validCoupons)
+            {
+                coupon.MarkAsUsed();
+            }
 
             // Apply persistence
             await unitOfWork.BeginTransactionAsync();
@@ -140,6 +173,26 @@ namespace BusinessLayer.Implementation
 
             // Return OrderDTO
             return mapper.Map<OrderDTO>(order);
+        }
+
+        public async Task<IEnumerable<CouponDTO>> GetCoupons(
+            Guid callerId,
+            string callerRole)
+        {
+            // Role parsing
+            if (!Enum.TryParse<Role>(callerRole, true, out var role))
+                throw new AuthenticateException("Invalid role");
+
+            // Student scoping
+            Guid? studentId = role == Role.Student ? callerId : null;
+
+            // Query
+            var list = await unitOfWork
+                .GetRepository<IOrderRepository>()
+                .GetCoupons(
+                    studentId);
+
+            return mapper.Map<IEnumerable<CouponDTO>>(list);
         }
         #endregion
     }

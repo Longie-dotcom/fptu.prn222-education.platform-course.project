@@ -47,6 +47,7 @@ namespace Domain.OrderManagement.Aggregate
             CreatedAt = DateTime.UtcNow;
         }
 
+        #region Methods
         public void MarkAsUsed()
         {
             if (IsUsed)
@@ -54,5 +55,6 @@ namespace Domain.OrderManagement.Aggregate
 
             IsUsed = true;
         }
+        #endregion
     }
 }

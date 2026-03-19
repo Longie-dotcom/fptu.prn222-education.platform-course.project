@@ -298,11 +298,14 @@ namespace BusinessLayer.Implementation
         }
 
         // Complaint
-        public async Task<IEnumerable<ComplaintDTO>> GetPendingComplaints()
+        public async Task<IEnumerable<ComplaintDTO>> GetComplaints(
+            ComplaintStatus? status,
+            Guid callerId,
+            string userRole)
         {
             var list = await unitOfWork
                 .GetRepository<ICourseRepository>()
-                .GetPendingComplaintsAsync();
+                .GetComplaintsAsync(status, userRole == Role.Teacher.ToString() ? callerId : null);
 
             if (list == null || !list.Any())
                 throw new NotFound("No pending complaints");
@@ -320,18 +323,6 @@ namespace BusinessLayer.Implementation
                 throw new NotFound($"Complaint with ID: {complaintId} not found");
 
             return mapper.Map<ComplaintDetailDTO>(complaint);
-        }
-
-        public async Task<IEnumerable<ComplaintDTO>> GetApprovedComplaintsForTeacher(Guid teacherId)
-        {
-            var list = await unitOfWork
-                .GetRepository<ICourseRepository>()
-                .GetTeacherApprovedComplaintsAsync(teacherId);
-
-            if (list == null || !list.Any())
-                throw new NotFound("No approved complaints found");
-
-            return mapper.Map<List<ComplaintDTO>>(list);
         }
 
         public async Task CreateComplaint(CreateComplaintDTO dto, Guid studentId)
@@ -376,37 +367,65 @@ namespace BusinessLayer.Implementation
 
             if (dto.IsApproved)
             {
+                // Approve (in-memory)
                 complaint.Approve(dto.AdminNote);
 
-                var approvedCount =
-                    await courseRepo.CountApprovedByCourseAsync(complaint.CourseID) + 1;
+                // Get already-approved complaints
+                var approvedComplaints = await courseRepo
+                    .GetApprovedByCoursesAsync(complaint.CourseID);
 
-                if (approvedCount >= 2)
+                var totalApproved = approvedComplaints.Count() + 1;
+
+                if (totalApproved >= 2)
                 {
-                    var course = await courseRepo.GetCourseDetailByID(complaint.CourseID)
+                    var course = complaint.Course
                         ?? throw new NotFound($"Course with ID: {complaint.CourseID} is not found");
 
+                    // Reject course
                     course.RejectByComplaint(
                         "Course removed due to multiple approved complaints.");
 
-                    courseRepo.Update(course.CourseID, course);
-
                     var orderRepo = unitOfWork.GetRepository<IOrderRepository>();
 
+                    // Get enrolled students
                     var students = await unitOfWork
                         .GetRepository<IEnrollmentRepository>()
                         .GetEnrolledStudentIdsByCourseId(course.CourseID);
 
+                    // 7.5% per student
+                    var couponAmount = course.Price.Amount * 0.075m;
+
+                    // Create coupons
                     var coupons = students.Select(studentId =>
                         new Coupon(
                             Guid.NewGuid(),
                             studentId,
-                            GenerateCouponCode(),
-                            course.Price.Amount,
+                            $"CMP-{Guid.NewGuid().ToString()[..8].ToUpper()}",
+                            couponAmount,
                             "Compensation for removed course"
                         )).ToList();
 
                     orderRepo.CreateCoupons(coupons);
+
+                    // Total penalty = total coupons
+                    if (coupons.Any())
+                    {
+                        var totalPenaltyAmount = coupons.Sum(c => c.DiscountAmount);
+
+                        var penalty = new Penalty(
+                            Guid.NewGuid(),
+                            course.TeacherID,
+                            course.CourseID,
+                            totalPenaltyAmount,
+                            $"Penalty equals total compensation for removed course for {students.Count()} enrollments"
+                        );
+
+                        orderRepo.CreatePenalty(penalty);
+                    }
+
+                    // Remove complaints (including current one)
+                    var allToRemove = approvedComplaints.Append(complaint).ToList();
+                    courseRepo.RemoveComplaints(allToRemove);
                 }
             }
             else
@@ -414,14 +433,10 @@ namespace BusinessLayer.Implementation
                 complaint.Reject(dto.AdminNote);
             }
 
+            // Persist everything
             courseRepo.UpdateComplaint(complaint);
 
             await unitOfWork.CommitAsync(adminId.ToString());
-        }
-
-        private string GenerateCouponCode()
-        {
-            return $"CMP-{Guid.NewGuid().ToString()[..8].ToUpper()}";
         }
         #endregion
     }

@@ -48,15 +48,15 @@
                         </div>
                         <div>
                             <label style="font-weight: 600; display: block; margin-bottom: 8px;">Grade</label>
-                            <select asp-for="VM.CreateCourseDTO.GradeID" asp-items="@(new SelectList(Model.VM.Grades, "GradeID", "Name"))" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;"></select>
+                            <select id="grade-select" asp-for="VM.CreateCourseDTO.GradeID" asp-items="@(new SelectList(Model.VM.Grades, "GradeID", "Name"))" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;"></select>
                         </div>
                         <div>
                             <label style="font-weight: 600; display: block; margin-bottom: 8px;">Subject</label>
-                            <select asp-for="VM.CreateCourseDTO.SubjectID" asp-items="@(new SelectList(Model.VM.Subjects, "SubjectID", "Name"))" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;"></select>
+                            <select id="subject-select" asp-for="VM.CreateCourseDTO.SubjectID" asp-items="@(new SelectList(Model.VM.Subjects, "SubjectID", "Name"))" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px;"></select>
                         </div>
                     </div>
 
-                    <div style="margin-bottom: 25px;">
+                    <div style="margin-bottom: 25px; margin-top: 25px;">
                         <label style="font-weight: 600; display: block; margin-bottom: 8px;">Course Thumbnail</label>
                         <div style="display: flex; gap: 20px; align-items: center;">
                             <div id="preview-container" style="display: none; width: 150px; height: 100px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
@@ -70,6 +70,22 @@
                                        onchange="previewThumbnail()"
                                        style="width: 96%; padding: 2%; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;" />
                                 <p style="font-size: 0.8rem; color: #64748b; margin: 5px 0 0 0;">Recommended: 16:9 aspect ratio (e.g., 1280x720px)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 25px;">
+                        <label style="font-weight: 600; display: block; margin-bottom: 8px;">Import Course from JSON</label>
+                        <div style="display: flex; gap: 20px; align-items: center;">
+                            <div id="preview-container" style="display: none; width: 150px; height: 100px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
+                                <img id="thumbnail-preview" src="#" style="width: 100%; height: 100%; object-fit: cover;" />
+                            </div>
+                            <div style="flex: 1;">
+                                <input type="file"
+                                       id="json-upload"
+                                       accept=".json"
+                                       style="width: 96%; padding: 2%; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;" />
+                                <p style="font-size: 0.8rem; color: #64748b; margin: 5px 0 0 0;">Upload a JSON file to automatically fill course details, chapters, lessons, quizzes, and assignments.</p>
                             </div>
                         </div>
                     </div>
@@ -94,7 +110,7 @@
         <input class="chapter-title" oninput="reindex()" placeholder="Chapter Title" style="width: 96%; padding: 2%; border: 1px solid #cbd5e0; border-radius: 8px; margin-bottom: 10px;" />
         <textarea class="chapter-description" placeholder="Chapter Description" style="width: 96%; padding: 2%; border: 1px solid #cbd5e0; border-radius: 8px; margin-bottom: 20px;"></textarea>
         <input type="hidden" class="chapter-order" />
-        <div class="lessons-container" style="display: flex; flex-direction: column; gap: 20px;"></div>
+        <div class="lessons-container" id="lessons-container" style="display: flex; flex-direction: column; gap: 20px;"></div>
 
         <button type="button" onclick="addLesson(this)" style="margin-top:15px; background:none; border:1px solid #4834d4; color:#4834d4; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600;">+ Add Lesson</button>
     </div>
@@ -104,7 +120,7 @@
             <h4 class="lesson-label" style="margin:0; color: #64748b; font-size: 0.85rem;">Lesson 1</h4>
             <button type="button" onclick="this.closest('.lesson-block').remove(); reindex();" style="color:#94a3b8; border:none; background:none; cursor:pointer;">&times; Remove Lesson</button>
         </div>
-
+        <input type="hidden" class="lesson-order" />
         <input class="lesson-title" oninput="reindex()" placeholder="Lesson Title" style="width: 96%; padding: 2%; border: 1px solid #cbd5e0; border-radius: 8px; margin-bottom: 10px;" />
         <textarea class="lesson-objectives" placeholder="Learning Objectives" style="width: 96%; padding: 2%; border: 1px solid #cbd5e0; border-radius: 8px; margin-bottom: 10px;"></textarea>
 
@@ -661,6 +677,95 @@
             reindex();
         }
 
+        function populateCourseFromJson(data) {
+
+            // ===== RESET =====
+            document.getElementById('chapters-container').innerHTML = '';
+
+            // ===== BASIC INFO =====
+            document.querySelector('[name="VM.CreateCourseDTO.Title"]').value = data.title || "";
+            document.querySelector('[name="VM.CreateCourseDTO.Description"]').value = data.description || "";
+            document.querySelector('[name="VM.CreateCourseDTO.Prerequisites"]').value = data.prerequisites || "";
+            document.querySelector('[name="VM.CreateCourseDTO.LearningOutcomes"]').value = data.learningOutcomes || "";
+            document.querySelector('[name="VM.CreateCourseDTO.Price"]').value = data.price || 0;
+
+            // ===== CHAPTERS =====
+            (data.chapters || []).forEach((chapterData, ci) => {
+
+            addChapter();
+            const chapter = document.querySelectorAll('.chapter-block')[ci];
+
+            chapter.querySelector('.chapter-title').value = chapterData.title || "";
+            chapter.querySelector('.chapter-description').value = chapterData.description || "";
+
+            // ===== LESSONS =====
+            (chapterData.lessons || []).forEach((lessonData, li) => {
+
+            const addLessonBtn = chapter.querySelector('button[onclick="addLesson(this)"]');
+            addLesson(addLessonBtn);
+
+            const lesson = chapter.querySelectorAll('.lesson-block')[li];
+
+            lesson.querySelector('.lesson-title').value = lessonData.title || "";
+            lesson.querySelector('.lesson-objectives').value = lessonData.objectives || "";
+
+            // ===== QUIZZES =====
+            (lessonData.quizzes || []).forEach(q => {
+
+            const quizBtn = lesson.querySelector('button[onclick="addQuiz(this)"]');
+            addQuiz(quizBtn);
+
+            const quizBlocks = lesson.querySelectorAll('.quiz-block');
+            const quiz = quizBlocks[quizBlocks.length - 1];
+
+            quiz.querySelector('.quiz-question').value = q.question || "";
+
+            const typeSelect = quiz.querySelector('.quiz-type');
+            typeSelect.value = "1"; // single choice
+            renderQuizAnswers(typeSelect);
+
+            const addOptBtn = quiz.querySelector('.add-opt-btn');
+
+            // ⚡ IMPORTANT: use addOption()
+            (q.options || []).forEach((opt, oi) => {
+
+                if (oi > 0) addOption(addOptBtn);
+
+                const rows = quiz.querySelectorAll('.options-container > div');
+                const row = rows[oi];
+
+                row.querySelector('.opt-text').value = opt;
+
+                if ((q.correctAnswers || []).includes(opt)) {
+                    row.querySelector('.opt-check').checked = true;
+                }
+            });
+
+                // trigger data binding
+                collectQuizData(quiz.querySelector('.quiz-question'));
+                });
+
+                // ===== ASSIGNMENTS =====
+                (lessonData.assignments || []).forEach(a => {
+
+                const asnBtn = lesson.querySelector('button[onclick="addAssignment(this)"]');
+                addAssignment(asnBtn);
+
+                const assigns = lesson.querySelectorAll('.assignment-block');
+                const asn = assigns[assigns.length - 1];
+
+                asn.querySelector('.asn-title').value = a.title || "";
+                asn.querySelector('.asn-desc').value = a.description || "";
+                asn.querySelector('.asn-score').value = a.maxScore || 0;
+                });
+
+                });
+            });
+
+            // ===== FINAL =====
+            reindex();
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             loadDraft();
         });
@@ -668,6 +773,32 @@
         document.getElementById("courseForm").addEventListener("submit", function () {
             reindex();
             localStorage.removeItem(DRAFT_KEY);
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const input = document.getElementById("json-upload");
+
+            input.addEventListener("change", function (e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+
+                reader.onload = function (event) {
+                    try {
+                        const data = JSON.parse(event.target.result);
+
+                        console.log("JSON LOADED:", data); // debug
+                        populateCourseFromJson(data);
+
+                    } catch (err) {
+                        console.error(err);
+                        alert("Invalid JSON file");
+                    }
+                };
+
+                reader.readAsText(file);
+            });
         });
 
         document.addEventListener('DOMContentLoaded', () => {

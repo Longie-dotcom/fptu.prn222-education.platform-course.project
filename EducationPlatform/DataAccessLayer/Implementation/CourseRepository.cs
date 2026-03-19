@@ -121,45 +121,46 @@ namespace DataAccessLayer.Implementation
         public async Task<Complaint?> GetComplaintDetailByID(Guid complaintId)
         {
             return await context.Complaints
-                .AsNoTracking()
                 .Include(c => c.User) // Student
                 .Include(c => c.Course)
                     .ThenInclude(c => c.Teacher) // Teacher
                 .FirstOrDefaultAsync(c => c.ComplaintID == complaintId);
         }
 
-        public async Task<IEnumerable<Complaint>> GetPendingComplaintsAsync()
+        public async Task<IEnumerable<Complaint>> GetComplaintsAsync(
+            ComplaintStatus? complaintStatus,
+            Guid? teacherId)
         {
-            return await context.Complaints
+            var query = context.Complaints
                 .AsNoTracking()
                 .Include(c => c.User) // Student
                 .Include(c => c.Course)
-                    .ThenInclude(c => c.Teacher) // Teacher
-                .Where(c => c.Status == ComplaintStatus.Pending)
+                    .ThenInclude(c => c.Teacher)
+                .AsQueryable();
+
+            // Filter by status (if provided)
+            if (complaintStatus.HasValue)
+            {
+                query = query.Where(c => c.Status == complaintStatus.Value);
+            }
+
+            // Filter by teacher (if provided)
+            if (teacherId.HasValue)
+            {
+                query = query.Where(c => c.Course.TeacherID == teacherId.Value);
+            }
+
+            return await query
                 .OrderByDescending(c => c.CreatedAt)
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Complaint>> GetTeacherApprovedComplaintsAsync(Guid teacherId)
-        {
-            return await context.Complaints
-                .AsNoTracking()
-                .Include(c => c.User) // Student
-                .Include(c => c.Course)
-                    .ThenInclude(c => c.Teacher) // Teacher
-                .Where(c =>
-                    c.Status == ComplaintStatus.Approved &&
-                    c.Course.TeacherID == teacherId)
-                .OrderByDescending(c => c.ReviewedAt)
-                .ToListAsync();
-        }
-
-        public async Task<int> CountApprovedByCourseAsync(Guid courseId)
+        public async Task<IEnumerable<Complaint>> GetApprovedByCoursesAsync(Guid courseId)
         {
             return await context.Complaints
                 .Where(c => c.CourseID == courseId &&
                             c.Status == ComplaintStatus.Approved)
-                .CountAsync();
+                .ToListAsync();
         }
 
         public void ReplaceViolatedPolicies(
@@ -225,7 +226,8 @@ namespace DataAccessLayer.Implementation
             context.Materials.AddRange(materials);
         }
 
-        public void CreateComplaint(Complaint complaint)
+        public void CreateComplaint(
+            Complaint complaint)
         {
             if (complaint == null)
                 return;
@@ -233,9 +235,21 @@ namespace DataAccessLayer.Implementation
             context.Complaints.Add(complaint);
         }
 
-        public void UpdateComplaint(Complaint complaint)
+        public void UpdateComplaint(
+            Complaint complaint)
         {
             context.Complaints.Update(complaint);
+        }
+
+        public void RemoveComplaints(
+            IEnumerable<Complaint> complaints)
+        {
+            foreach (var c in complaints)
+            {
+                context.Complaints.Attach(c);
+            }
+
+            context.Complaints.RemoveRange(complaints);
         }
         #endregion
     }

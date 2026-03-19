@@ -1,7 +1,7 @@
 ﻿using Domain.CourseManagement.Aggregate;
 using Domain.CourseManagement.Entity;
+using Domain.CourseManagement.Enum;
 using Domain.IdentityManagement.ValueObject;
-using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessLayer.Interface
 {
@@ -26,12 +26,11 @@ namespace DataAccessLayer.Interface
         Task<Complaint?> GetComplaintDetailByID(
             Guid complaintId);
 
-        Task<IEnumerable<Complaint>> GetPendingComplaintsAsync();
+        Task<IEnumerable<Complaint>> GetComplaintsAsync(
+            ComplaintStatus? complaintStatus, 
+            Guid? teacherId);
 
-        Task<IEnumerable<Complaint>> GetTeacherApprovedComplaintsAsync(
-            Guid teacherId);
-
-        Task<int> CountApprovedByCourseAsync(
+        Task<IEnumerable<Complaint>> GetApprovedByCoursesAsync(
             Guid courseId);
 
         void ReplaceViolatedPolicies(
@@ -58,5 +57,8 @@ namespace DataAccessLayer.Interface
 
         void UpdateComplaint(
             Complaint complaint);
+
+        void RemoveComplaints(
+            IEnumerable<Complaint> complaints);
     }
 }
