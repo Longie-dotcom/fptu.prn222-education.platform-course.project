@@ -271,6 +271,7 @@ namespace DataAccessLayer.Persistence
                 entity.Property(c => c.RejectedAt);
                 entity.Property(c => c.AdminNote);
                 entity.Property(c => c.PublishedAt);
+                entity.Property(c => c.CreatedAt);
 
                 entity.Property(c => c.TeacherID).IsRequired();
                 entity.Property(c => c.GradeID).IsRequired();

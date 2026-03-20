@@ -9,6 +9,7 @@ using PresentationLayer.ViewModels;
 
 namespace PresentationLayer.Pages.Courses
 {
+    [IgnoreAntiforgeryToken]
     [Authorize(Roles = "Teacher")]
     public class CreateCourseModel : PageModel
     {

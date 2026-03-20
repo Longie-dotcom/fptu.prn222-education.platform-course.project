@@ -18,6 +18,8 @@ namespace PresentationLayer.Pages.Courses
         #region Properties
         [BindProperty(SupportsGet = true)]
         public ListCourseViewModel VM { get; set; } = new();
+
+        public int PageIndex { get; set; } = 1;
         #endregion
 
         public ListCourseModel(
@@ -29,7 +31,7 @@ namespace PresentationLayer.Pages.Courses
         }
 
         #region Methods
-        public async Task OnGetAsync(int page = 1)
+        public async Task OnGetAsync()
         {
             try
             {
@@ -38,27 +40,22 @@ namespace PresentationLayer.Pages.Courses
                     Title = VM.Title,
                     GradeName = VM.GradeName,
                     SubjectName = VM.SubjectName,
-                    PageIndex = page,
-                    PageSize = 6
+                    PageIndex = VM.CurrentPage,
+                    PageSize = 9
                 };
 
-                // Check if user is logged in
                 if (User.Identity?.IsAuthenticated == true)
                 {
-                    // Logged-in user: get user ID and role
                     (Guid userId, string role) = CheckClaimHelper.CheckClaim(User);
                     VM.Courses = await courseService.GetCourses(query, userId, role);
                 }
                 else
                 {
-                    // Public/discovery: no login required
                     VM.Courses = await courseService.DiscoverCourses(query);
                 }
 
-                // Populate grades and subjects for filter dropdowns
                 VM.Grades = await academicService.GetGrades();
                 VM.Subjects = await academicService.GetSubjects();
-                VM.CurrentPage = page;
             }
             catch (Exception ex)
             {

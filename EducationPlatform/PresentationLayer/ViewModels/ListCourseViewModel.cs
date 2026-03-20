@@ -1,4 +1,5 @@
 ﻿using BusinessLayer.DTO;
+using Microsoft.AspNetCore.Mvc;
 
 namespace PresentationLayer.ViewModels
 {
@@ -9,14 +10,14 @@ namespace PresentationLayer.ViewModels
         public string? GradeName { get; set; }
         public string? SubjectName { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public int CurrentPage { get; set; } = 1;
+
         // Data
         public IEnumerable<CourseDTO> Courses { get; set; } = new List<CourseDTO>();
 
-        // Dropdown Sources (Normalized Data)
+        // Dropdown Sources
         public IEnumerable<GradeDTO> Grades { get; set; } = new List<GradeDTO>();
         public IEnumerable<SubjectDTO> Subjects { get; set; } = new List<SubjectDTO>();
-
-        // Pagination Info (Optional but recommended)
-        public int CurrentPage { get; set; }
     }
 }

@@ -27,6 +27,7 @@ namespace Domain.CourseManagement.Aggregate
         public DateTime? RejectedAt { get; private set; }
         public string? AdminNote { get; private set; }
         public DateTime? PublishedAt { get; private set; }
+        public DateTime? CreatedAt { get; private set; }
 
         public Guid TeacherID { get; private set; }
         public Guid GradeID { get; private set; }
@@ -92,6 +93,7 @@ namespace Domain.CourseManagement.Aggregate
             TeacherID = teacherId;
             GradeID = gradeId;
             SubjectID = subjectId;
+            CreatedAt = DateTime.Now;
         }
 
         #region Methods

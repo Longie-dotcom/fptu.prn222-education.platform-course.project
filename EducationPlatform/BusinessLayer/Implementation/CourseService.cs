@@ -77,7 +77,8 @@ namespace BusinessLayer.Implementation
             return mapper.Map<IEnumerable<CourseDTO>>(list);
         }
 
-        public async Task<IEnumerable<CourseDTO>> DiscoverCourses(QueryCourseDTO dto)
+        public async Task<IEnumerable<CourseDTO>> DiscoverCourses(
+            QueryCourseDTO dto)
         {
             // No callerId or role needed for discovery
             var list = await unitOfWork
@@ -128,7 +129,8 @@ namespace BusinessLayer.Implementation
             return dto;
         }
 
-        public async Task<CourseDetailDTO> DiscoverCourseDetail(Guid courseId)
+        public async Task<CourseDetailDTO> DiscoverCourseDetail(
+            Guid courseId)
         {
             // Fetch the course detail
             var course = await unitOfWork

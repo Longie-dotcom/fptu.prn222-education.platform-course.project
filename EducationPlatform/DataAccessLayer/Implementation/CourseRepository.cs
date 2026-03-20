@@ -85,7 +85,7 @@ namespace DataAccessLayer.Implementation
             }
 
             // ---------- Sorting (IMPORTANT for paging) ----------
-            query = query.OrderByDescending(c => c.PublishedAt ?? DateTime.MinValue);
+            query = query.OrderByDescending(c => c.CreatedAt ?? DateTime.MinValue);
 
             // ---------- Paging ----------
             query = query
