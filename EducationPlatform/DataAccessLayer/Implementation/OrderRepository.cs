@@ -246,6 +246,135 @@ namespace DataAccessLayer.Implementation
 
             return result;
         }
+
+        public async Task<List<(Guid CourseId, string CourseName, decimal Revenue)>>
+            GetTopCoursesByRevenue(
+                DateTime? from,
+                DateTime? to,
+                Guid? gradeId,
+                Guid? subjectId,
+                int top)
+        {
+            var query = context.Orders
+                .Include(o => o.Course)
+                .AsQueryable();
+
+            if (from.HasValue)
+                query = query.Where(o => o.CreatedAt >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(o => o.CreatedAt <= to.Value);
+
+            if (gradeId.HasValue)
+                query = query.Where(o => o.Course.GradeID == gradeId.Value);
+
+            if (subjectId.HasValue)
+                query = query.Where(o => o.Course.SubjectID == subjectId.Value);
+
+            var result = await query
+                .GroupBy(o => new
+                {
+                    o.CourseID,
+                    CourseName = o.Course.Title
+                })
+                .Select(g => new
+                {
+                    g.Key.CourseID,
+                    g.Key.CourseName,
+                    Revenue = g.Sum(x => x.PlatformAmount)
+                })
+                .OrderByDescending(x => x.Revenue)
+                .Take(top)
+                .ToListAsync();
+
+            return result
+                .Select(x => (x.CourseID, x.CourseName, (decimal)x.Revenue))
+                .ToList();
+        }
+
+        public async Task<List<(Guid SubjectId, string SubjectName, decimal Revenue)>>
+            GetTopSubjectsByRevenue(
+                DateTime? from,
+                DateTime? to,
+                Guid? gradeId,
+                int top)
+        {
+            var query = context.Orders
+                .Include(o => o.Course)
+                .ThenInclude(c => c.Subject)
+                .AsQueryable();
+
+            if (from.HasValue)
+                query = query.Where(o => o.CreatedAt >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(o => o.CreatedAt <= to.Value);
+
+            if (gradeId.HasValue)
+                query = query.Where(o => o.Course.GradeID == gradeId.Value);
+
+            var result = await query
+                .GroupBy(o => new
+                {
+                    o.Course.SubjectID,
+                    SubjectName = o.Course.Subject.Name
+                })
+                .Select(g => new
+                {
+                    g.Key.SubjectID,
+                    g.Key.SubjectName,
+                    Revenue = g.Sum(x => x.PlatformAmount)
+                })
+                .OrderByDescending(x => x.Revenue)
+                .Take(top)
+                .ToListAsync();
+
+            return result
+                .Select(x => (x.SubjectID, x.SubjectName, (decimal)x.Revenue))
+                .ToList();
+        }
+
+        public async Task<List<(Guid GradeId, string GradeName, decimal Revenue)>>
+            GetTopGradesByRevenue(
+                DateTime? from,
+                DateTime? to,
+                Guid? subjectId,
+                int top)
+        {
+            var query = context.Orders
+                .Include(o => o.Course)
+                .ThenInclude(c => c.Grade)
+                .AsQueryable();
+
+            if (from.HasValue)
+                query = query.Where(o => o.CreatedAt >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(o => o.CreatedAt <= to.Value);
+
+            if (subjectId.HasValue)
+                query = query.Where(o => o.Course.SubjectID == subjectId.Value);
+
+            var result = await query
+                .GroupBy(o => new
+                {
+                    o.Course.GradeID,
+                    GradeName = o.Course.Grade.Name
+                })
+                .Select(g => new
+                {
+                    g.Key.GradeID,
+                    g.Key.GradeName,
+                    Revenue = g.Sum(x => x.PlatformAmount)
+                })
+                .OrderByDescending(x => x.Revenue)
+                .Take(top)
+                .ToListAsync();
+
+            return result
+                .Select(x => (x.GradeID, x.GradeName, (decimal)x.Revenue))
+                .ToList();
+        }
         #endregion
     }
 }

@@ -47,5 +47,30 @@ namespace DataAccessLayer.Interface
             string groupBy,
             Guid? gradeId,
             Guid? subjectId);
+
+        Task<List<(Guid CourseId, string CourseName, decimal EnrollmentCount)>>
+        GetTopCoursesByEnrollment(
+            DateTime? from,
+            DateTime? to,
+            Guid? gradeId,
+            Guid? subjectId,
+            int top
+        );
+
+        Task<List<(Guid SubjectId, string SubjectName, decimal EnrollmentCount)>>
+        GetTopSubjectsByEnrollment(
+            DateTime? from,
+            DateTime? to,
+            Guid? gradeId,
+            int top
+        );
+
+        Task<List<(Guid GradeId, string GradeName, decimal EnrollmentCount)>>
+        GetTopGradesByEnrollment(
+            DateTime? from,
+            DateTime? to,
+            Guid? subjectId,
+            int top
+        );
     }
 }

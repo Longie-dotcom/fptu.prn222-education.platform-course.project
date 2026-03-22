@@ -343,10 +343,156 @@ namespace BusinessLayer.Implementation
             };
         }
 
-        public Task<TopPerformanceDTO> GetTopPerformance(
-            QueryTopPerformanceDTO query)
+        public async Task<TopPerformanceDTO> GetTopPerformance(QueryTopPerformanceDTO query)
         {
-            throw new NotImplementedException();
+            var orderRepo = unitOfWork.GetRepository<IOrderRepository>();
+            var enrollmentRepo = unitOfWork.GetRepository<IEnrollmentRepository>();
+
+            // =======================
+            // Enrollment-based
+            // =======================
+
+            var topCoursesByEnrollment = await enrollmentRepo.GetTopCoursesByEnrollment(
+                query.From,
+                query.To,
+                query.GradeId,
+                query.SubjectId,
+                query.Top
+            );
+
+            var topSubjectsByEnrollment = await enrollmentRepo.GetTopSubjectsByEnrollment(
+                query.From,
+                query.To,
+                query.GradeId,
+                query.Top
+            );
+
+            var topGradesByEnrollment = await enrollmentRepo.GetTopGradesByEnrollment(
+                query.From,
+                query.To,
+                query.SubjectId,
+                query.Top
+            );
+
+            // =======================
+            // Revenue-based
+            // =======================
+
+            var topCoursesByRevenue = await orderRepo.GetTopCoursesByRevenue(
+                query.From,
+                query.To,
+                query.GradeId,
+                query.SubjectId,
+                query.Top
+            );
+
+            var topSubjectsByRevenue = await orderRepo.GetTopSubjectsByRevenue(
+                query.From,
+                query.To,
+                query.GradeId,
+                query.Top
+            );
+
+            var topGradesByRevenue = await orderRepo.GetTopGradesByRevenue(
+                query.From,
+                query.To,
+                query.SubjectId,
+                query.Top
+            );
+
+            // =======================
+            // Mapping to DTO
+            // =======================
+
+            var result = new TopPerformanceDTO
+            {
+                CoursesByEnrollment = topCoursesByEnrollment.Select(x => new TopCourseByEnrollmentDTO
+                {
+                    CourseId = x.CourseId,
+                    CourseName = x.CourseName,
+                    EnrollmentCount = x.EnrollmentCount
+                }).ToList(),
+
+                CoursesByRevenue = topCoursesByRevenue.Select(x => new TopCourseByRevenueDTO
+                {
+                    CourseId = x.CourseId,
+                    CourseName = x.CourseName,
+                    Revenue = x.Revenue
+                }).ToList(),
+
+                SubjectsByEnrollment = topSubjectsByEnrollment.Select(x => new TopSubjectByEnrollmentDTO
+                {
+                    SubjectId = x.SubjectId,
+                    SubjectName = x.SubjectName,
+                    EnrollmentCount = x.EnrollmentCount
+                }).ToList(),
+
+                SubjectsByRevenue = topSubjectsByRevenue.Select(x => new TopSubjectByRevenueDTO
+                {
+                    SubjectId = x.SubjectId,
+                    SubjectName = x.SubjectName,
+                    Revenue = x.Revenue
+                }).ToList(),
+
+                GradesByEnrollment = topGradesByEnrollment.Select(x => new TopGradeByEnrollmentDTO
+                {
+                    GradeId = x.GradeId,
+                    GradeName = x.GradeName,
+                    EnrollmentCount = x.EnrollmentCount
+                }).ToList(),
+
+                GradesByRevenue = topGradesByRevenue.Select(x => new TopGradeByRevenueDTO
+                {
+                    GradeId = x.GradeId,
+                    GradeName = x.GradeName,
+                    Revenue = x.Revenue
+                }).ToList()
+            };
+
+            // =======================
+            // DEBUG (TEMPORARY)
+            // =======================
+            Console.WriteLine("===== TOP PERFORMANCE DEBUG =====");
+
+            Console.WriteLine("Courses By Enrollment:");
+            foreach (var x in topCoursesByEnrollment)
+            {
+                Console.WriteLine($"Course: {x.CourseName} | Enrollments: {x.EnrollmentCount}");
+            }
+
+            Console.WriteLine("Courses By Revenue:");
+            foreach (var x in topCoursesByRevenue)
+            {
+                Console.WriteLine($"Course: {x.CourseName} | Revenue: {x.Revenue}");
+            }
+
+            Console.WriteLine("Subjects By Enrollment:");
+            foreach (var x in topSubjectsByEnrollment)
+            {
+                Console.WriteLine($"Subject: {x.SubjectName} | Enrollments: {x.EnrollmentCount}");
+            }
+
+            Console.WriteLine("Subjects By Revenue:");
+            foreach (var x in topSubjectsByRevenue)
+            {
+                Console.WriteLine($"Subject: {x.SubjectName} | Revenue: {x.Revenue}");
+            }
+
+            Console.WriteLine("Grades By Enrollment:");
+            foreach (var x in topGradesByEnrollment)
+            {
+                Console.WriteLine($"Grade: {x.GradeName} | Enrollments: {x.EnrollmentCount}");
+            }
+
+            Console.WriteLine("Grades By Revenue:");
+            foreach (var x in topGradesByRevenue)
+            {
+                Console.WriteLine($"Grade: {x.GradeName} | Revenue: {x.Revenue}");
+            }
+
+            Console.WriteLine("================================");
+
+            return result;
         }
 
         public async Task<SummaryStatisticDTO> SummaryStatistic(
@@ -433,8 +579,6 @@ namespace BusinessLayer.Implementation
                 }
             };
         }
-
-
         #endregion
     }
 }
