@@ -18,6 +18,7 @@ namespace DataAccessLayer.Implementation
         #endregion
 
         public EnrollmentRepository(EducationPlatformDBContext context) : base(context) { }
+        
         #region Methods
 
         public async Task<IEnumerable<Enrollment>> GetStudentEnrollments(Guid studentId)
@@ -432,6 +433,131 @@ namespace DataAccessLayer.Implementation
                     data.Select(x => (x.Label, (decimal)x.Count)).ToList()
                 }
             };
+        }
+
+        public async Task<List<(Guid CourseId, string CourseName, decimal EnrollmentCount)>>
+    GetTopCoursesByEnrollment(
+        DateTime? from,
+        DateTime? to,
+        Guid? gradeId,
+        Guid? subjectId,
+        int top)
+        {
+            var q = context.Enrollments
+                .Include(e => e.Course)
+                .AsQueryable();
+
+            if (from.HasValue)
+                q = q.Where(e => e.EnrolledAt >= from.Value);
+
+            if (to.HasValue)
+                q = q.Where(e => e.EnrolledAt <= to.Value);
+
+            if (gradeId.HasValue)
+                q = q.Where(e => e.Course.GradeID == gradeId.Value);
+
+            if (subjectId.HasValue)
+                q = q.Where(e => e.Course.SubjectID == subjectId.Value);
+
+            var result = await q
+                .GroupBy(e => new { e.CourseID, e.Course.Title })
+                .Select(g => new
+                {
+                    g.Key.CourseID,
+                    CourseName = g.Key.Title,
+                    EnrollmentCount = g.Count()
+                })
+                .OrderByDescending(x => x.EnrollmentCount)
+                .Take(top)
+                .ToListAsync();
+
+            return result
+                .Select(x => (x.CourseID, x.CourseName, (decimal)x.EnrollmentCount))
+                .ToList();
+        }
+
+        public async Task<List<(Guid SubjectId, string SubjectName, decimal EnrollmentCount)>>
+            GetTopSubjectsByEnrollment(
+                DateTime? from,
+                DateTime? to,
+                Guid? gradeId,
+                int top)
+        {
+            var query = context.Enrollments
+                .Include(e => e.Course)
+                .ThenInclude(c => c.Subject)
+                .AsQueryable();
+
+            if (from.HasValue)
+                query = query.Where(e => e.EnrolledAt >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(e => e.EnrolledAt <= to.Value);
+
+            if (gradeId.HasValue)
+                query = query.Where(e => e.Course.GradeID == gradeId.Value);
+
+            var result = await query
+                .GroupBy(e => new
+                {
+                    e.Course.SubjectID,
+                    SubjectName = e.Course.Subject.Name
+                })
+                .Select(g => new
+                {
+                    g.Key.SubjectID,
+                    g.Key.SubjectName,
+                    EnrollmentCount = g.Count()
+                })
+                .OrderByDescending(x => x.EnrollmentCount)
+                .Take(top)
+                .ToListAsync();
+
+            return result
+                .Select(x => (x.SubjectID, x.SubjectName, (decimal)x.EnrollmentCount))
+                .ToList();
+        }
+
+        public async Task<List<(Guid GradeId, string GradeName, decimal EnrollmentCount)>>
+            GetTopGradesByEnrollment(
+                DateTime? from,
+                DateTime? to,
+                Guid? subjectId,
+                int top)
+        {
+            var query = context.Enrollments
+                .Include(e => e.Course)
+                .ThenInclude(c => c.Grade)
+                .AsQueryable();
+
+            if (from.HasValue)
+                query = query.Where(e => e.EnrolledAt >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(e => e.EnrolledAt <= to.Value);
+
+            if (subjectId.HasValue)
+                query = query.Where(e => e.Course.SubjectID == subjectId.Value);
+
+            var result = await query
+                .GroupBy(e => new
+                {
+                    e.Course.GradeID,
+                    GradeName = e.Course.Grade.Name
+                })
+                .Select(g => new
+                {
+                    g.Key.GradeID,
+                    g.Key.GradeName,
+                    EnrollmentCount = g.Count()
+                })
+                .OrderByDescending(x => x.EnrollmentCount)
+                .Take(top)
+                .ToListAsync();
+
+            return result
+                .Select(x => (x.GradeID, x.GradeName, (decimal)x.EnrollmentCount))
+                .ToList();
         }
         #endregion
     }

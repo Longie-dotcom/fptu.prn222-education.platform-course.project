@@ -39,5 +39,27 @@ namespace DataAccessLayer.Interface
             DateTime? to,
             string groupBy,
             string revenueType);
+
+        Task<List<(Guid CourseId, string CourseName, decimal Revenue)>>
+            GetTopCoursesByRevenue(
+                DateTime? from,
+                DateTime? to,
+                Guid? gradeId,
+                Guid? subjectId,
+                int top);
+
+        Task<List<(Guid SubjectId, string SubjectName, decimal Revenue)>>
+            GetTopSubjectsByRevenue(
+                DateTime? from,
+                DateTime? to,
+                Guid? gradeId,
+                int top);
+
+        Task<List<(Guid GradeId, string GradeName, decimal Revenue)>>
+            GetTopGradesByRevenue(
+                DateTime? from,
+                DateTime? to,
+                Guid? subjectId,
+                int top);
     }
 }
