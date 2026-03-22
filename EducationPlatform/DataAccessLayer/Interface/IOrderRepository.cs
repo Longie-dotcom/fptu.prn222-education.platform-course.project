@@ -27,6 +27,7 @@ namespace DataAccessLayer.Interface
         Task<Coupon?> GetCouponDetailById(
             Guid couponId);
 
-        void CreateCoupons(IEnumerable<Coupon> coupons);
+        void CreateCoupons(
+            IEnumerable<Coupon> coupons);
     }
 }

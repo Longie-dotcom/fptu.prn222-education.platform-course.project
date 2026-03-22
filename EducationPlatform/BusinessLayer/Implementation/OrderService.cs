@@ -3,6 +3,7 @@ using BusinessLayer.BusinessException;
 using BusinessLayer.DTO;
 using BusinessLayer.Interface;
 using DataAccessLayer.Interface;
+using DataAccessLayer.Persistence.Seeds;
 using Domain.EnrollmentManagement.Aggregate;
 using Domain.IdentityManagement.ValueObject;
 using Domain.OrderManagement.Aggregate;
@@ -15,7 +16,6 @@ namespace BusinessLayer.Implementation
         #region Attributes
         private readonly IMapper mapper;
         private readonly IUnitOfWork unitOfWork;
-        private const decimal PLATFORM_COMMISSION_RATE = 0.1m; // 10% platform fee
         #endregion
 
         #region Properties
@@ -106,7 +106,7 @@ namespace BusinessLayer.Implementation
 
             // Apply domain - create commission from course price
             var commission = Commission.Create(
-                PLATFORM_COMMISSION_RATE,
+                EnrollmentSeeder.PLATFORM_COMMISSION_RATE,
                 finalPrice);
 
             // Apply domain - create Order
@@ -114,7 +114,8 @@ namespace BusinessLayer.Implementation
                 Guid.NewGuid(),
                 commission,
                 dto.StudentID,
-                dto.CourseID);
+                dto.CourseID,
+                null);
 
             // Apply domain - Mark coupons as used
             foreach (var coupon in validCoupons)
@@ -154,12 +155,13 @@ namespace BusinessLayer.Implementation
                     $"Course with ID: {order.CourseID} not found");
 
             // Apply domain: start student enrollment and update order status
-            order.FinishOrder();
+            order.StudentPaid(null);
 
             var enrollment = new Enrollment(
                 Guid.NewGuid(),
                 order.StudentID,
-                order.CourseID);
+                order.CourseID,
+                null);
 
             // Apply persistence
             await unitOfWork.BeginTransactionAsync();

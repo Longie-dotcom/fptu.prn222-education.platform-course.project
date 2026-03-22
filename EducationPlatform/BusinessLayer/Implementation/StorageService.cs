@@ -112,6 +112,27 @@ namespace BusinessLayer.Implementation
 
             return finalRelativePath.Replace("\\", "/");
         }
+
+        public async Task<string> GetTranscriptFromVideoAsync(
+            string videoRelativePath,
+            CancellationToken ct)
+        {
+            // Change extension to .txt
+            var transcriptRelativePath = Path.ChangeExtension(videoRelativePath, ".txt");
+
+            var fullPath = GetFullPath(transcriptRelativePath);
+
+            if (!File.Exists(fullPath))
+                throw new FileNotFoundException("Transcript not found", transcriptRelativePath);
+
+            using var reader = new StreamReader(fullPath);
+            return await reader.ReadToEndAsync(ct);
+        }
+
+        public string GetFullPath(string relativePath)
+        {
+            return Path.Combine(root, relativePath.Replace("/", Path.DirectorySeparatorChar.ToString()));
+        }
         #endregion
     }
 }

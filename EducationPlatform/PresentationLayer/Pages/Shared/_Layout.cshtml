@@ -100,6 +100,18 @@
                             </li>
                         }
 
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li>
+                                <a asp-page="/Statistics/Statistic"
+                                       style="text-decoration: none; color: #4b4f56; font-weight: 600; font-size: 0.95rem; transition: color 0.2s; cursor: pointer;"
+                                       onmouseover="this.style.color='#4834d4';"
+                                       onmouseout="this.style.color='#4b4f56';">
+                                    <text>Statistics</text>
+                                </a>
+                            </li>
+                        }
+
                         @if (User.IsInRole("Student"))
                         {
                             <li>

@@ -28,7 +28,8 @@ namespace Domain.EnrollmentManagement.Aggregate
         public Enrollment(
             Guid enrollmentId,
             Guid studentId,
-            Guid courseId)
+            Guid courseId,
+            DateTime? enrolledAt)
         {
             if (enrollmentId == Guid.Empty)
                 throw new DomainException(
@@ -44,7 +45,7 @@ namespace Domain.EnrollmentManagement.Aggregate
 
             EnrollmentID = enrollmentId;
             Status = EnrollmentStatus.Active;
-            EnrolledAt = DateTime.UtcNow;
+            EnrolledAt = enrolledAt ?? DateTime.Now;
             StudentID = studentId;
             CourseID = courseId;
 
@@ -52,6 +53,10 @@ namespace Domain.EnrollmentManagement.Aggregate
         }
 
         #region Methods
+        public void CompleteEnrollment(DateTime? completedAt)
+        {
+            CompletedAt = completedAt ?? DateTime.Now;
+        }
         #endregion
     }
 }

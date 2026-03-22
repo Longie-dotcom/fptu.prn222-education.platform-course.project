@@ -1,6 +1,7 @@
 ﻿using DataAccessLayer.Interface;
 using DataAccessLayer.Persistence;
 using Domain.IdentityManagement.Aggregate;
+using Domain.IdentityManagement.ValueObject;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccessLayer.Implementation

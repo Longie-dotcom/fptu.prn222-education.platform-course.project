@@ -19,5 +19,11 @@
             string extension,
             CancellationToken ct
         );
+
+        Task<string> GetTranscriptFromVideoAsync(
+            string videoRelativePath,
+            CancellationToken ct);
+
+        string GetFullPath(string relativePath);
     }
 }

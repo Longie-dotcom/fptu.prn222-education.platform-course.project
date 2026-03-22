@@ -70,29 +70,23 @@
                         string statusBg;
                         string statusText;
 
-                        if (order.Status == OrderStatus.Paid)
+                        if (order.Status == OrderStatus.Created)
                         {
-                            label = "Pending";
+                            label = "Created";
                             statusBg = "#fff9e6";
                             statusText = "#f1c40f";
                         }
                         else if (order.Status == OrderStatus.Pending)
                         {
-                            label = "Processing";
+                            label = "Pending";
                             statusBg = "#e8f5ff";
                             statusText = "#0984e3";
                         }
-                        else if (order.Status == OrderStatus.Failed)
-                        {
-                            label = "Failed";
-                            statusBg = "#fff0f0";
-                            statusText = "#d63031";
-                        }
                         else
                         {
-                            label = order.Status.ToString();
-                            statusBg = "#f1f2f6";
-                            statusText = "#636e72";
+                            label = "Pending";
+                            statusBg = "#e8f5ff";
+                            statusText = "#0984e3";
                         }
 
                         // Calculation for total if needed for a "Total" column,

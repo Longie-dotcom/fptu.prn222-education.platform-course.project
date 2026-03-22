@@ -1,3 +1,4 @@
+using BusinessLayer.Implementation;
 using BusinessLayer.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +18,7 @@ namespace PresentationLayer.Pages.Courses
         private readonly ICourseService courseService;
         private readonly IAcademicService academicService;
         private readonly IStorageService storageService;
+        private readonly ISpeechToTextService speechService;
         private readonly IHubContext<CourseHub> courseHub;
         #endregion
 
@@ -29,11 +31,13 @@ namespace PresentationLayer.Pages.Courses
             ICourseService courseService,
             IAcademicService academicService,
             IStorageService storageService,
+            ISpeechToTextService speechService,
             IHubContext<CourseHub> courseHub)
         {
             this.courseService = courseService;
             this.academicService = academicService;
             this.storageService = storageService;
+            this.speechService = speechService;
             this.courseHub = courseHub;
         }
 
@@ -110,8 +114,28 @@ namespace PresentationLayer.Pages.Courses
             CancellationToken ct)
         {
             var path = await storageService.CompleteUploadAsync(uploadId, extension, ct);
+            var fullPath = storageService.GetFullPath(path);
 
-            return new JsonResult(new { url = path });
+            // Background transcription (safer version)
+            _ = ExecuteTranscriptionAsync(fullPath);
+
+            return new JsonResult(new
+            {
+                url = path,
+                transcriptUrl = (string?)null
+            });
+        }
+
+        private async Task ExecuteTranscriptionAsync(string fullPath)
+        {
+            try
+            {
+                await speechService.TranscribeVideo(fullPath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Transcription error: {ex.Message}");
+            }
         }
 
         public async Task<IActionResult> OnGetDefaultLessonsAsync(Guid subjectId, Guid gradeId)

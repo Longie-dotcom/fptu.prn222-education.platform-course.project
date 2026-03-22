@@ -197,6 +197,8 @@ namespace DataAccessLayer.Persistence
 
                 entity.Property(u => u.EmailOtpExpiresAt);
 
+                entity.Property(u => u.CreatedAt);
+
                 entity.Property(u => u.IsActive)
                       .HasDefaultValue(true);
 
@@ -626,6 +628,18 @@ namespace DataAccessLayer.Persistence
                       .IsRequired();
 
                 entity.Property(p => p.PaidAt);
+
+                // Relationship with Teacher (User)
+                entity.HasOne(p => p.User)
+                      .WithMany()
+                      .HasForeignKey(p => p.StudentID)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Relationship with Course
+                entity.HasOne(p => p.Course)
+                      .WithMany()
+                      .HasForeignKey(p => p.CourseID)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             // ====================

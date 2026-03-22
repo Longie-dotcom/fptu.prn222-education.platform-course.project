@@ -21,6 +21,7 @@ namespace Domain.IdentityManagement.Aggregate
         public string? EmailOtp { get; private set; }
         public DateTime? EmailOtpExpiresAt { get; private set; }
         public bool IsActive { get; private set; }
+        public DateTime CreatedAt { get; private set; }
         #endregion
 
         protected User() { }
@@ -33,6 +34,7 @@ namespace Domain.IdentityManagement.Aggregate
             string name,
             string? bio,
             Role role,
+            DateTime? createdAt,
             bool isVerified = false)
         {
             if (userId == Guid.Empty)
@@ -68,6 +70,7 @@ namespace Domain.IdentityManagement.Aggregate
             Role = role;
             IsVerified = isVerified;
             IsActive = true;
+            CreatedAt = createdAt ?? DateTime.Now;
         }
 
         #region Methods

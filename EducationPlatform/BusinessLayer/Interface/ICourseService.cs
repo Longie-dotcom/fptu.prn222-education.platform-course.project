@@ -20,6 +20,9 @@ namespace BusinessLayer.Interface
             Guid callerId,
             string callerRole);
 
+        Task<CourseDetailDTO> GetCourseDetail(
+            Guid courseId);
+
         Task<CourseDetailDTO> DiscoverCourseDetail(
             Guid courseId);
 

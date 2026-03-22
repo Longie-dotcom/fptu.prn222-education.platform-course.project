@@ -27,7 +27,7 @@ namespace Domain.CourseManagement.Aggregate
         public DateTime? RejectedAt { get; private set; }
         public string? AdminNote { get; private set; }
         public DateTime? PublishedAt { get; private set; }
-        public DateTime? CreatedAt { get; private set; }
+        public DateTime CreatedAt { get; private set; }
 
         public Guid TeacherID { get; private set; }
         public Guid GradeID { get; private set; }
@@ -61,7 +61,8 @@ namespace Domain.CourseManagement.Aggregate
             string learningOutcomes,
             Guid teacherId,
             Guid gradeId,
-            Guid subjectId)
+            Guid subjectId,
+            DateTime? createdAt)
         {
             if (courseId == Guid.Empty)
                 throw new DomainException("Course ID cannot be empty");
@@ -93,7 +94,7 @@ namespace Domain.CourseManagement.Aggregate
             TeacherID = teacherId;
             GradeID = gradeId;
             SubjectID = subjectId;
-            CreatedAt = DateTime.Now;
+            CreatedAt = createdAt ?? DateTime.Now;
         }
 
         #region Methods
@@ -195,6 +196,19 @@ namespace Domain.CourseManagement.Aggregate
 
             Status = CourseStatus.Rejected;
             RejectedAt = DateTime.Now;
+        }
+
+        public void MarkAsPublished(DateTime publishedAt)
+        {
+            Status = CourseStatus.Published;
+            PublishedAt = publishedAt;
+        }
+
+        public void MarkAsRejected(DateTime rejectedAt, string note)
+        {
+            Status = CourseStatus.Rejected;
+            RejectedAt = rejectedAt;
+            AdminNote = note;
         }
         #endregion
     }

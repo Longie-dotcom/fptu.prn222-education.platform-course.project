@@ -1,4 +1,6 @@
-﻿using Domain.DomainExceptions;
+﻿using Domain.CourseManagement.Aggregate;
+using Domain.DomainExceptions;
+using Domain.IdentityManagement.Aggregate;
 using Domain.OrderManagement.Enum;
 using Domain.OrderManagement.ValueObject;
 
@@ -21,6 +23,9 @@ namespace Domain.OrderManagement.Aggregate
 
         public Guid StudentID { get; private set; }
         public Guid CourseID { get; private set; }
+
+        public User User { get; private set; }
+        public Course Course { get; private set; }
         #endregion
 
         protected Order() { }
@@ -29,7 +34,8 @@ namespace Domain.OrderManagement.Aggregate
             Guid orderId,
             Commission commission,
             Guid studentId,
-            Guid courseId)
+            Guid courseId,
+            DateTime? createdAt)
         {
             if (orderId == Guid.Empty)
                 throw new DomainException(
@@ -48,17 +54,17 @@ namespace Domain.OrderManagement.Aggregate
             PlatformAmount = commission.PlatformAmount;
             TeacherAmount = commission.TeacherAmount;
             Method = OrderMethod.PayOS;
-            Status = OrderStatus.Pending;
-            CreatedAt = DateTime.UtcNow;
+            Status = OrderStatus.Created;
+            CreatedAt = createdAt ?? DateTime.Now;
             StudentID = studentId;
             CourseID = courseId;
         }
 
         #region Methods
-        public void FinishOrder()
+        public void StudentPaid(DateTime? paidAt)
         {
-            Status = OrderStatus.Paid;
-            PaidAt = DateTime.UtcNow;
+            Status = OrderStatus.Pending;
+            PaidAt = paidAt ?? DateTime.Now;
         }
         #endregion
     }

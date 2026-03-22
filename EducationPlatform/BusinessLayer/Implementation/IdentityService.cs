@@ -109,7 +109,8 @@ namespace BusinessLayer.Implementation
                     dto.Phone,
                     dto.Name,
                     dto.Bio,
-                    (Role)dto.Role
+                    (Role)dto.Role,
+                    DateTime.Now
                 );
 
                 user.GenerateEmailOtp(TimeSpan.FromMinutes(5));

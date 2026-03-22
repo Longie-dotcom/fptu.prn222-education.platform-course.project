@@ -2,6 +2,7 @@ using System.Text;
 using BusinessLayer;
 using DataAccessLayer;
 using DataAccessLayer.Persistence;
+using DataAccessLayer.Persistence.Seeds;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;

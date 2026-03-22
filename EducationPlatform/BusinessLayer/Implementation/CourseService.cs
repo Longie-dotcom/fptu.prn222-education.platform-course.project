@@ -129,6 +129,24 @@ namespace BusinessLayer.Implementation
             return dto;
         }
 
+        public async Task<CourseDetailDTO> GetCourseDetail(
+            Guid courseId)
+        {
+            // Validate course list existence
+            var course = await unitOfWork
+                .GetRepository<ICourseRepository>()
+                .GetCourseDetailByID(courseId);
+
+            if (course == null)
+                throw new NotFound(
+                    $"Course with ID: {courseId} is not found");
+
+            // Mapping
+            var dto = mapper.Map<CourseDetailDTO>(course);
+
+            return dto;
+        }
+
         public async Task<CourseDetailDTO> DiscoverCourseDetail(
             Guid courseId)
         {
@@ -167,7 +185,8 @@ namespace BusinessLayer.Implementation
                 dto.LearningOutcomes,
                 callerId,
                 dto.GradeID,
-                dto.SubjectID);
+                dto.SubjectID,
+                DateTime.Now);
             var chapters = new List<Chapter>();
             var lessons = new List<Lesson>();
             var quizzes = new List<Quiz>();
