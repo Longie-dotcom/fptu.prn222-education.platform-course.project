@@ -27,7 +27,7 @@ namespace DataAccessLayer.Interface
             Guid complaintId);
 
         Task<IEnumerable<Complaint>> GetComplaintsAsync(
-            ComplaintStatus? complaintStatus, 
+            ComplaintStatus? complaintStatus,
             Guid? teacherId);
 
         Task<IEnumerable<Complaint>> GetApprovedByCoursesAsync(
@@ -60,5 +60,15 @@ namespace DataAccessLayer.Interface
 
         void RemoveComplaints(
             IEnumerable<Complaint> complaints);
-    }
+
+        Task<(
+            int InReview,
+            int Rejected,
+            int Published,
+            Dictionary<string, int> GradeCounts,
+            Dictionary<string, int> SubjectCounts
+        )> Summary(
+            DateTime? from,
+            DateTime? to);
+            }
 }

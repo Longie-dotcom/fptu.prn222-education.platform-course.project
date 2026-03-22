@@ -44,6 +44,32 @@ namespace DataAccessLayer.Implementation
             return await context.Users
                 .FirstOrDefaultAsync(u => u.EmailOtp == otp);
         }
+
+        public async Task<(int TotalUsers, int TotalTeachers, int TotalStudents)> Summary(DateTime? from, DateTime? to)
+        {
+            var query = context.Users.AsQueryable();
+
+            // ===== Apply date filters =====
+            if (from.HasValue)
+                query = query.Where(u => u.CreatedAt >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(u => u.CreatedAt <= to.Value);
+
+            var result = await query
+                .GroupBy(u => 1)
+                .Select(g => new
+                {
+                    TotalUsers = g.Count(),
+                    TotalTeachers = g.Count(u => u.Role == Role.Teacher),
+                    TotalStudents = g.Count(u => u.Role == Role.Student)
+                })
+                .FirstOrDefaultAsync();
+
+            return result == null
+                ? (0, 0, 0)
+                : (result.TotalUsers, result.TotalTeachers, result.TotalStudents);
+        }
         #endregion
     }
 }

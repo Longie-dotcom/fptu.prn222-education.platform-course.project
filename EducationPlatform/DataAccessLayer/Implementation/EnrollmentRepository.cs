@@ -271,6 +271,64 @@ namespace DataAccessLayer.Implementation
                 .Normalize(NormalizationForm.FormC)
                 .ToLowerInvariant();
         }
+
+        public async Task<(
+           int Total,
+           int Completed,
+           Dictionary<string, int> GradeCounts,
+           Dictionary<string, int> SubjectCounts
+       )> Summary(DateTime? from, DateTime? to)
+        {
+            // ===== Base query with filters =====
+            var query = context.Enrollments.AsQueryable();
+
+            if (from.HasValue)
+                query = query.Where(e => e.EnrolledAt >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(e => e.EnrolledAt <= to.Value);
+
+            // ===== 1. Basic summary =====
+            var summary = await query
+                .GroupBy(e => 1)
+                .Select(g => new
+                {
+                    Total = g.Count(),
+                    Completed = g.Count(e => e.CompletedAt != null)
+                })
+                .FirstOrDefaultAsync();
+
+            // ===== 2. Grade distribution =====
+            var gradeDict = await query
+                .GroupBy(e => e.Course.Grade.Name)
+                .Select(g => new
+                {
+                    Grade = g.Key,
+                    Count = g.Count()
+                })
+                .ToDictionaryAsync(x => x.Grade, x => x.Count);
+
+            // ===== 3. Subject distribution =====
+            var subjectDict = await query
+                .GroupBy(e => e.Course.Subject.Name)
+                .Select(g => new
+                {
+                    Subject = g.Key,
+                    Count = g.Count()
+                })
+                .ToDictionaryAsync(x => x.Subject, x => x.Count);
+
+            // ===== Return =====
+            return (
+                summary?.Total ?? 0,
+                summary?.Completed ?? 0,
+                gradeDict,
+                subjectDict
+            );
+        }
+
+
+
         #endregion
     }
 }
