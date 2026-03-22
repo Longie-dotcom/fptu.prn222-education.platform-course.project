@@ -251,6 +251,63 @@ namespace DataAccessLayer.Implementation
 
             context.Complaints.RemoveRange(complaints);
         }
+
+        public async Task<(
+           int InReview,
+           int Rejected,
+           int Published,
+           Dictionary<string, int> GradeCounts,
+           Dictionary<string, int> SubjectCounts
+       )> Summary(DateTime? from, DateTime? to)
+        {
+            var query = context.Courses.AsQueryable();
+
+            if (from.HasValue)
+                query = query.Where(c => c.CreatedAt >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(c => c.CreatedAt <= to.Value);
+
+            // ===== 1. Status summary =====
+            var status = await query
+                .GroupBy(c => 1)
+                .Select(g => new
+                {
+                    InReview = g.Count(c => c.Status == CourseStatus.InReview),
+                    Rejected = g.Count(c => c.Status == CourseStatus.Rejected),
+                    Published = g.Count(c => c.Status == CourseStatus.Published)
+                })
+                .FirstOrDefaultAsync();
+
+            // ===== 2. Grade distribution =====
+            var gradeDict = await query
+                .GroupBy(c => c.Grade.Name)
+                .Select(g => new
+                {
+                    Grade = g.Key,
+                    Count = g.Count()
+                })
+                .ToDictionaryAsync(x => x.Grade, x => x.Count);
+
+            // ===== 3. Subject distribution =====
+            var subjectDict = await query
+                .GroupBy(c => c.Subject.Name)
+                .Select(g => new
+                {
+                    Subject = g.Key,
+                    Count = g.Count()
+                })
+                .ToDictionaryAsync(x => x.Subject, x => x.Count);
+
+            return (
+                status?.InReview ?? 0,
+                status?.Rejected ?? 0,
+                status?.Published ?? 0,
+                gradeDict,
+                subjectDict
+            );
+        }
+
         #endregion
     }
 }

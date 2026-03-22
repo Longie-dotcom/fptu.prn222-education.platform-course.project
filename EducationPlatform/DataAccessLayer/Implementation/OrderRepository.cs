@@ -118,6 +118,34 @@ namespace DataAccessLayer.Implementation
 
             context.Coupons.AddRange(coupons);
         }
+        public async Task<(int Total, int Commission, int TeacherFinance)> Summary(
+           DateTime? from,
+           DateTime? to)
+        {
+            // ===== Base query with filters =====
+            var query = context.Orders.AsQueryable();
+
+            if (from.HasValue)
+                query = query.Where(o => o.PaidAt >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(o => o.PaidAt <= to.Value);
+
+            var result = await query
+                .GroupBy(o => 1)
+                .Select(g => new
+                {
+                    Total = g.Sum(x => (int)(x.PlatformAmount + x.TeacherAmount)),
+                    Commission = g.Sum(x => (int)x.PlatformAmount),
+                    TeacherFinance = g.Sum(x => (int)x.TeacherAmount)
+                })
+                .FirstOrDefaultAsync();
+
+            return result == null
+                ? (0, 0, 0)
+                : (result.Total, result.Commission, result.TeacherFinance);
+        }
+
         #endregion
     }
 }

@@ -10,5 +10,7 @@ namespace DataAccessLayer.Interface
         Task<User?> GetUserByPhone(string phone);
         Task<User?> GetByRefreshToken(string refreshToken);
         Task<User?> GetUserByOTP(string otp);
+
+        Task<(int TotalUsers, int TotalTeachers, int TotalStudents)> Summary(DateTime? from, DateTime? to);
     }
 }

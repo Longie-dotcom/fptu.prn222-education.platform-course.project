@@ -29,5 +29,9 @@ namespace DataAccessLayer.Interface
 
         void CreateCoupons(
             IEnumerable<Coupon> coupons);
+
+        Task<(int Total, int Commission, int TeacherFinance)> Summary(
+            DateTime? from,
+            DateTime? to);
     }
 }

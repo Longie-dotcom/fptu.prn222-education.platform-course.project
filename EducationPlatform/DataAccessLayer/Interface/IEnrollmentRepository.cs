@@ -31,5 +31,14 @@ namespace DataAccessLayer.Interface
             Guid lessonId,
             Guid quizId,
             List<string> submittedAnswers);
+
+        Task<(
+            int Total,
+            int Completed,
+            Dictionary<string, int> GradeCounts,
+            Dictionary<string, int> SubjectCounts
+        )> Summary(
+            DateTime? from,
+            DateTime? to);
     }
 }
