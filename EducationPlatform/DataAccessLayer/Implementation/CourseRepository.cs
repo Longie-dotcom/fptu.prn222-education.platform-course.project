@@ -308,6 +308,69 @@ namespace DataAccessLayer.Implementation
             );
         }
 
+        public async Task<Dictionary<string, List<(string Label, decimal Value)>>> AnalyticsGrowth(
+            DateTime? from,
+            DateTime? to,
+            string groupBy,
+            Guid? gradeId,
+            Guid? subjectId)
+        {
+            var query = context.Courses.AsQueryable();
+
+            // ===== Filters =====
+            if (from.HasValue)
+                query = query.Where(c => c.CreatedAt >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(c => c.CreatedAt <= to.Value);
+
+            if (gradeId.HasValue)
+                query = query.Where(c => c.GradeID == gradeId);
+
+            if (subjectId.HasValue)
+                query = query.Where(c => c.SubjectID == subjectId);
+
+            // ===== Step 1: Group in DB (no string formatting) =====
+            var rawData = await query
+                .GroupBy(c => new
+                {
+                    c.CreatedAt.Year,
+                    c.CreatedAt.Month,
+                    c.CreatedAt.Day
+                })
+                .Select(g => new
+                {
+                    g.Key.Year,
+                    g.Key.Month,
+                    g.Key.Day,
+                    Count = g.Count()
+                })
+                .ToListAsync();
+
+            // ===== Step 2: Format labels in memory =====
+            var data = rawData
+                .Select(x => new
+                {
+                    Label = groupBy.ToLower() switch
+                    {
+                        "day" => $"{x.Year}-{x.Month:D2}-{x.Day:D2}",
+                        "month" => $"{x.Year}-{x.Month:D2}",
+                        "year" => x.Year.ToString(),
+                        _ => throw new ArgumentException("Invalid groupBy")
+                    },
+                    x.Count
+                })
+                .OrderBy(x => x.Label)
+                .ToList();
+
+            return new Dictionary<string, List<(string, decimal)>>
+            {
+                {
+                    "Courses",
+                    data.Select(x => (x.Label, (decimal)x.Count)).ToList()
+                }
+            };
+        }
         #endregion
     }
 }

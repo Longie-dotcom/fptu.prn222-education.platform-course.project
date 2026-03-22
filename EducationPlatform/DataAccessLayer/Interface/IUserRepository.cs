@@ -12,5 +12,11 @@ namespace DataAccessLayer.Interface
         Task<User?> GetUserByOTP(string otp);
 
         Task<(int TotalUsers, int TotalTeachers, int TotalStudents)> Summary(DateTime? from, DateTime? to);
+
+        Task<Dictionary<string, List<(string Label, decimal Value)>>> AnalyticsGrowth(
+            DateTime? from,
+            DateTime? to,
+            string groupBy,
+            string? userRole);
     }
 }

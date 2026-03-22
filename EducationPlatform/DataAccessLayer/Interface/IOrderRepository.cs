@@ -33,5 +33,11 @@ namespace DataAccessLayer.Interface
         Task<(int Total, int Commission, int TeacherFinance)> Summary(
             DateTime? from,
             DateTime? to);
+
+        Task<Dictionary<string, List<(string Label, decimal Value)>>> AnalyticsGrowth(
+            DateTime? from,
+            DateTime? to,
+            string groupBy,
+            string revenueType);
     }
 }
