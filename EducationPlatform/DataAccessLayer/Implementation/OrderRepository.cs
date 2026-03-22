@@ -146,6 +146,106 @@ namespace DataAccessLayer.Implementation
                 : (result.Total, result.Commission, result.TeacherFinance);
         }
 
+        public async Task<Dictionary<string, List<(string Label, decimal Value)>>> AnalyticsGrowth(
+            DateTime? from,
+            DateTime? to,
+            string groupBy,
+            string revenueType)
+        {
+            var query = context.Orders.AsQueryable();
+
+            // ===== Filters =====
+            if (from.HasValue)
+                query = query.Where(o => o.CreatedAt >= from.Value);
+
+            if (to.HasValue)
+                query = query.Where(o => o.CreatedAt <= to.Value);
+
+            var gb = (groupBy ?? "month").ToLower();
+
+            // ===== Step 1: Dynamic grouping =====
+            var rawData = gb switch
+            {
+                "day" => await query
+                    .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month, o.CreatedAt.Day })
+                    .Select(g => new
+                    {
+                        g.Key.Year,
+                        g.Key.Month,
+                        g.Key.Day,
+                        Commission = g.Sum(x => x.PlatformAmount),
+                        Teacher = g.Sum(x => x.TeacherAmount)
+                    })
+                    .ToListAsync(),
+
+                "month" => await query
+                    .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month })
+                    .Select(g => new
+                    {
+                        g.Key.Year,
+                        g.Key.Month,
+                        Day = 0,
+                        Commission = g.Sum(x => x.PlatformAmount),
+                        Teacher = g.Sum(x => x.TeacherAmount)
+                    })
+                    .ToListAsync(),
+
+                "year" => await query
+                    .GroupBy(o => new { o.CreatedAt.Year })
+                    .Select(g => new
+                    {
+                        g.Key.Year,
+                        Month = 0,
+                        Day = 0,
+                        Commission = g.Sum(x => x.PlatformAmount),
+                        Teacher = g.Sum(x => x.TeacherAmount)
+                    })
+                    .ToListAsync(),
+
+                _ => throw new ArgumentException("Invalid groupBy")
+            };
+
+            // ===== Step 2: Format labels =====
+            var data = rawData
+                .Select(x => new
+                {
+                    Label = gb switch
+                    {
+                        "day" => $"{x.Year}-{x.Month:D2}-{x.Day:D2}",
+                        "month" => $"{x.Year}-{x.Month:D2}",
+                        "year" => x.Year.ToString(),
+                        _ => $"{x.Year}-{x.Month:D2}"
+                    },
+                    x.Commission,
+                    x.Teacher,
+                    x.Year,
+                    x.Month,
+                    x.Day
+                })
+                .OrderBy(x => x.Year)
+                .ThenBy(x => x.Month)
+                .ThenBy(x => x.Day)
+                .ToList();
+
+            // ===== Build result =====
+            var result = new Dictionary<string, List<(string, decimal)>>();
+
+            if (revenueType == "All" || revenueType == "Commission")
+            {
+                result["Commission"] = data
+                    .Select(x => (x.Label, x.Commission))
+                    .ToList();
+            }
+
+            if (revenueType == "All" || revenueType == "Teacher")
+            {
+                result["Teacher"] = data
+                    .Select(x => (x.Label, x.Teacher))
+                    .ToList();
+            }
+
+            return result;
+        }
         #endregion
     }
 }

@@ -1,9 +1,9 @@
-﻿using DataAccessLayer.Interface;
+﻿using System.Text;
+using DataAccessLayer.Interface;
 using DataAccessLayer.Persistence;
 using Domain.EnrollmentManagement.Aggregate;
 using Domain.EnrollmentManagement.Entity;
 using Microsoft.EntityFrameworkCore;
-using System.Text;
 
 namespace DataAccessLayer.Implementation
 {
@@ -327,8 +327,112 @@ namespace DataAccessLayer.Implementation
             );
         }
 
+        public async Task<Dictionary<string, List<(string Label, decimal Value)>>> AnalyticsGrowth(
+            DateTime? from,
+            DateTime? to,
+            string groupBy,
+            Guid? gradeId,
+            Guid? subjectId)
+        {
+            var query = context.Enrollments.AsQueryable();
 
+            // ===== Filters =====
+            if (from.HasValue)
+                query = query.Where(e => e.EnrolledAt >= from.Value);
 
+            if (to.HasValue)
+                query = query.Where(e => e.EnrolledAt <= to.Value);
+
+            if (gradeId.HasValue)
+                query = query.Where(e => e.Course.GradeID == gradeId);
+
+            if (subjectId.HasValue)
+                query = query.Where(e => e.Course.SubjectID == subjectId);
+
+            // Normalize groupBy
+            var gb = (groupBy ?? "month").ToLower();
+
+            // ===== Step 1: Dynamic grouping in DB =====
+            var rawData = gb switch
+            {
+                "day" => await query
+                    .GroupBy(e => new
+                    {
+                        e.EnrolledAt.Year,
+                        e.EnrolledAt.Month,
+                        e.EnrolledAt.Day
+                    })
+                    .Select(g => new
+                    {
+                        g.Key.Year,
+                        g.Key.Month,
+                        g.Key.Day,
+                        Count = g.Count()
+                    })
+                    .ToListAsync(),
+
+                "month" => await query
+                    .GroupBy(e => new
+                    {
+                        e.EnrolledAt.Year,
+                        e.EnrolledAt.Month
+                    })
+                    .Select(g => new
+                    {
+                        g.Key.Year,
+                        g.Key.Month,
+                        Day = 0,
+                        Count = g.Count()
+                    })
+                    .ToListAsync(),
+
+                "year" => await query
+                    .GroupBy(e => new
+                    {
+                        e.EnrolledAt.Year
+                    })
+                    .Select(g => new
+                    {
+                        g.Key.Year,
+                        Month = 0,
+                        Day = 0,
+                        Count = g.Count()
+                    })
+                    .ToListAsync(),
+
+                _ => throw new ArgumentException("Invalid groupBy")
+            };
+
+            // ===== Step 2: Format labels in memory =====
+            var data = rawData
+                .Select(x => new
+                {
+                    Label = gb switch
+                    {
+                        "day" => $"{x.Year}-{x.Month:D2}-{x.Day:D2}",
+                        "month" => $"{x.Year}-{x.Month:D2}",
+                        "year" => x.Year.ToString(),
+                        _ => $"{x.Year}-{x.Month:D2}"
+                    },
+                    x.Count,
+                    x.Year,
+                    x.Month,
+                    x.Day
+                })
+                .OrderBy(x => x.Year)
+                .ThenBy(x => x.Month)
+                .ThenBy(x => x.Day)
+                .ToList();
+
+            // ===== Build result =====
+            return new Dictionary<string, List<(string, decimal)>>
+            {
+                {
+                    "Enrollments",
+                    data.Select(x => (x.Label, (decimal)x.Count)).ToList()
+                }
+            };
+        }
         #endregion
     }
 }

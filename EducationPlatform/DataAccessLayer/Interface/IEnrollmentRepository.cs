@@ -40,5 +40,12 @@ namespace DataAccessLayer.Interface
         )> Summary(
             DateTime? from,
             DateTime? to);
+
+        Task<Dictionary<string, List<(string Label, decimal Value)>>> AnalyticsGrowth(
+            DateTime? from,
+            DateTime? to,
+            string groupBy,
+            Guid? gradeId,
+            Guid? subjectId);
     }
 }
